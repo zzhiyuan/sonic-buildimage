@@ -18,7 +18,9 @@ RUN apt-get update &&   \
         rrdtool         \
         python-smbus    \
         ethtool         \
-        dmidecode
+        dmidecode       \
+        gcc             \
+        libpython-dev
 
 {% if docker_platform_monitor_debs.strip() -%}
 # Copy locally-built Debian package dependencies
@@ -44,14 +46,21 @@ RUN apt-get update &&   \
 {{ install_python_wheels(docker_platform_monitor_whls.split(' ')) }}
 {% endif %}
 
+# Install python dependencies for use by some plugins
+RUN pip install --no-cache-dir \
+        linuxfd==1.4.4
+
 # Clean up
 RUN apt-get purge -y           \
-        python-pip          && \
+        python-pip             \
+        gcc                    \
+        libpython-dev       && \
     apt-get clean -y        && \
     apt-get autoclean -y    && \
     apt-get autoremove -y   && \
     rm -rf /debs               \
            /python-wheels      \
+           /var/lib/apt/lists  \
            ~/.cache
 
 COPY ["docker_init.sh", "lm-sensors.sh", "/usr/bin/"]
